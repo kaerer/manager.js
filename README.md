@@ -1,2 +1,2 @@
 # manager.js
-Javascript Lib,
+Javascript Lib
