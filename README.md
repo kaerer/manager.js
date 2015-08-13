@@ -1,0 +1,2 @@
+# manager.js
+Javascript Lib,
