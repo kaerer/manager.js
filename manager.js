@@ -1,4 +1,6 @@
 /**
+ * v.2.5 ~ ...
+ *
  * Created by erce on 21/07/15.
  * @author erce.erozbek@gmail.com
  */
@@ -191,7 +193,12 @@ var manager = {
         return Math.floor(Math.random() * max);
     },
     'getCsrfCode': function () {
-        return yii.getCsrfToken()
+        if(!this.csrf){
+            this.csrf = $('meta[name=csrf-token]').prop('content');
+        }
+
+        return this.csrf;
+        //return yii.getCsrfToken();
     },
     'scrollTo': function (target, offset, animation_time) {
         offset = offset || 0;
@@ -224,7 +231,22 @@ var manager = {
         });
         return template;
     },
-
+    'loader': function(show, selector){
+        selector = selector ? selector : '.preload';
+        var loader = this.getBox(selector, true);
+        var body_overflow = this.getCache('body_overflow');
+        if(!body_overflow) {
+            body_overflow = this.getBox('body', true).css('overflow');
+            this.setCache('body_overflow', body_overflow);
+        }
+        if(show){
+            loader.show();
+            this.getBox('body', true).css('overflow', 'hidden')
+        } else {
+            loader.hide();
+            this.getBox('body', true).css('overflow', body_overflow)
+        }
+    }
 };
 
 //window.onerror = manager.handleError;
