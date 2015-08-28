@@ -19,5 +19,8 @@
   "bugs": {
     "url": "https://github.com/kaerer/manager.js/issues"
   },
-  "homepage": "https://github.com/kaerer/manager.js#readme"
+  "homepage": "https://github.com/kaerer/manager.js#readme",
+  "dependencies": {
+    "jquery": "2.1.4"
+  }
 }
