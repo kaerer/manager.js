@@ -79,6 +79,45 @@ var manager = {
         }
         return obj3;
     },
+    'cloneObjects': function clone(obj) {
+        var copy;
+
+        // Handle the 3 simple types, and null or undefined
+        if (null == obj || "object" != typeof obj) return obj;
+
+        // Handle Date
+        if (obj instanceof Date) {
+            copy = new Date();
+            copy.setTime(obj.getTime());
+            return copy;
+        }
+
+        // Handle Array
+        if (obj instanceof Array) {
+            copy = [];
+            for (var i = 0, len = obj.length; i < len; i++) {
+                copy[i] = clone(obj[i]);
+            }
+            return copy;
+        }
+
+        // Handle Object
+        if (!this.isset(jQuery) && obj instanceof Object) {
+            copy = {};
+            for (var attr in obj) {
+                if (obj.hasOwnProperty(attr)) copy[attr] = clone(obj[attr]);
+            }
+            return copy;
+        } else {
+            // Shallow copy
+            copy = jQuery.extend({}, obj);
+            // Deep copy
+            //copy = jQuery.extend(true, {}, obj);
+            return copy;
+        }
+
+        throw new Error("Unable to copy obj! Its type isn't supported.");
+    },
     'getLast': function (arr) {
         return arr[Object.keys(arr)[Object.keys(arr).length - 1]];
     },
@@ -90,25 +129,32 @@ var manager = {
     },
     'google': {
         'analytics': {
-            'init': function(id){
-                (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-                        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-                    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-                })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
-                if(id){
+            'init': function (id) {
+                (function (i, s, o, g, r, a, m) {
+                    i['GoogleAnalyticsObject'] = r;
+                    i[r] = i[r] || function () {
+                            (i[r].q = i[r].q || []).push(arguments)
+                        }, i[r].l = 1 * new Date();
+                    a = s.createElement(o),
+                        m = s.getElementsByTagName(o)[0];
+                    a.async = 1;
+                    a.src = g;
+                    m.parentNode.insertBefore(a, m)
+                })(window, document, 'script', '//www.google-analytics.com/analytics.js', 'ga');
+                if (id) {
                     manager.google.analytics.use('create', id, 'auto');
                     manager.google.analytics.use('send', 'pageview');
                 }
             },
-            'use': function(){
+            'use': function () {
                 window['ga'].apply(null, arguments);
             }
         },
         'adwords': {
-            'init': function(){
+            'init': function () {
                 //manager.add.js('//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js');
             },
-            'reload': function(){
+            'reload': function () {
                 (adsbygoogle = window.adsbygoogle || []).push({});
             }
         }
@@ -136,7 +182,7 @@ var manager = {
         }
     },
     'getLocation': function (path, get_params, add_hash) {
-        var url = location.protocol + '//' + location.host + + (path ? path : location.pathname) + location.search;
+        var url = location.protocol + '//' + location.host + +(path ? path : location.pathname) + location.search;
         add_hash = add_hash ? true : false;
         if (get_params) {
             url += ((url.indexOf("?") == -1) ? "?" : "&");
@@ -193,7 +239,7 @@ var manager = {
         return Math.floor(Math.random() * max);
     },
     'getCsrfCode': function () {
-        if(!this.csrf){
+        if (!this.csrf) {
             this.csrf = $('meta[name=csrf-token]').prop('content');
         }
 
@@ -231,15 +277,15 @@ var manager = {
         });
         return template;
     },
-    'loader': function(show, selector){
+    'loader': function (show, selector) {
         selector = selector ? selector : '.preload';
         var loader = this.getBox(selector, true);
         var body_overflow = this.getCache('body_overflow');
-        if(!body_overflow) {
+        if (!body_overflow) {
             body_overflow = this.getBox('body', true).css('overflow');
             this.setCache('body_overflow', body_overflow);
         }
-        if(show){
+        if (show) {
             loader.show();
             this.getBox('body', true).css('overflow', 'hidden')
         } else {

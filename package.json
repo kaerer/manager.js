@@ -1,0 +1,23 @@
+{
+  "name": "manager.js",
+  "version": "1.0.0",
+  "description": "Helper js class",
+  "main": "require('manager.js')",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kaerer/manager.js.git"
+  },
+  "keywords": [
+    "jquery",
+    "helper"
+  ],
+  "author": "Erce Erözbek <erce.erozbek@gmail.com> (http://erceerozbek.com/)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/kaerer/manager.js/issues"
+  },
+  "homepage": "https://github.com/kaerer/manager.js#readme"
+}
