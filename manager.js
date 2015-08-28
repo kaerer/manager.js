@@ -5,6 +5,8 @@
  * @author erce.erozbek@gmail.com
  */
 
+
+/*
 if(!$){
     var $ = require('jquery');
 }
@@ -16,6 +18,7 @@ jQuery(window).load(function ($) {
 jQuery(document).ready(function ($) {
 
 });
+*/
 
 var adsbygoogle;
 
