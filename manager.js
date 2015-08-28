@@ -7,10 +7,9 @@
 
 
 /*
-if(!$){
-    var $ = require('jquery');
-}
 
+var jQuery = require('jquery');
+console.log($);
 jQuery(window).load(function ($) {
 
 });
@@ -304,3 +303,6 @@ var manager = {
 };
 
 //window.onerror = manager.handleError;
+module.exports = {
+    manager: manager
+};
