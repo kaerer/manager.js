@@ -1,28 +1,15 @@
+
 /**
- * v.2.5 ~ ...
+ * v.2.6 ~ ...
  *
  * Created by erce on 21/07/15.
  * @author erce.erozbek@gmail.com
  */
 
-
-/*
-
-var jQuery = require('jquery');
-console.log($);
-jQuery(window).load(function ($) {
-
-});
-
-jQuery(document).ready(function ($) {
-
-});
-*/
-
 var adsbygoogle;
 
 var manager = {
-    'debug': false,
+    'debug': true,
     'csrf': false,
     'cache': {},
     'getCache': function (key, default_value, set_cache) {
@@ -302,7 +289,4 @@ var manager = {
     }
 };
 
-//window.onerror = manager.handleError;
-module.exports = {
-    manager: manager
-};
+window.onerror = manager.handleError;
