@@ -12,6 +12,7 @@ var manager = {
     'debug': true,
     'csrf': false,
     'cache': {},
+    'config': {},
     'getCache': function (key, default_value, set_cache) {
         set_cache = set_cache ? set_cache : false;
         if (this.isset(this.cache[key])) {
@@ -112,6 +113,28 @@ var manager = {
 
         throw new Error("Unable to copy obj! Its type isn't supported.");
     },
+    'getAllConfig': function () {
+        return this.config;
+    },
+    'setAllConfig': function (config) {
+        this.config = config;
+    },
+    'getConfig': function (key) {
+        if (manager.isset(this.config[key])) {
+            return this.config[key];
+        } else {
+            this.log('config key not found(' + key + ')', 'Error');
+            return false;
+        }
+    },
+    'setConfig': function (key, value) {
+        this.config[key] = value;
+    },
+    'mergeConfig': function (widget_conf) {
+        if (typeof widget_conf == "object") {
+            this.setAllConfig(manager.mergeObjects(this.widget_conf, widget_conf))
+        }
+    },
     'getLast': function (arr) {
         return arr[Object.keys(arr)[Object.keys(arr).length - 1]];
     },
@@ -146,7 +169,7 @@ var manager = {
         },
         'adwords': {
             'init': function () {
-                //manager.add.js('//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js');
+                manager.add.js('//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js');
             },
             'reload': function () {
                 (adsbygoogle = window.adsbygoogle || []).push({});
@@ -285,6 +308,16 @@ var manager = {
         } else {
             loader.hide();
             this.getBox('body', true).css('overflow', body_overflow)
+        }
+    },
+    'add': {
+        'js': function (js_file) {
+            var scr = document.createElement("script");
+            scr.type = "text/javascript";
+            scr.async = true;
+            scr.src = js_file;
+            var s = document.getElementsByTagName("head")[0];
+            s.parentNode.appendChild(scr);
         }
     }
 };
