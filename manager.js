@@ -1,6 +1,6 @@
 
 /**
- * v.2.6 ~ ...
+ * v.2.6.1
  *
  * Created by erce on 21/07/15.
  * @author erce.erozbek@gmail.com
