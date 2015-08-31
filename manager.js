@@ -2,6 +2,7 @@
 /**
  * v.2.6.1
  *
+ * Requirements jQuery, Yii2 js lib
  * Created by erce on 21/07/15.
  * @author erce.erozbek@gmail.com
  */
@@ -130,9 +131,9 @@ var manager = {
     'setConfig': function (key, value) {
         this.config[key] = value;
     },
-    'mergeConfig': function (widget_conf) {
-        if (typeof widget_conf == "object") {
-            this.setAllConfig(manager.mergeObjects(this.widget_conf, widget_conf))
+    'mergeConfig': function (config) {
+        if (typeof config == "object") {
+            this.setAllConfig(manager.mergeObjects(this.config, config))
         }
     },
     'getLast': function (arr) {
