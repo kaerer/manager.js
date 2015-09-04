@@ -198,9 +198,9 @@ var manager = {
             }(document, 'script', 'facebook-jssdk'));
         }
     },
-    'getLocation': function (path, get_params, add_hash) {
-        var url = location.protocol + '//' + location.host + +(path ? path : location.pathname) + location.search;
-        add_hash = add_hash ? true : false;
+    'getLocation': function (path, get_params, only_path, other_url) {
+        var url = (other_url ? other_url : (location.protocol + '//' + location.host).replace(/[\/]+$/, '')) + '/' + (path ? path : location.pathname).replace(/^[\/]+/, '');
+        only_path = only_path ? true : false;
         if (get_params) {
             url += ((url.indexOf("?") == -1) ? "?" : "&");
             var c = manager.countObject(get_params);
@@ -210,13 +210,13 @@ var manager = {
                 manager.log([k, v, c, get_params, i]);
             });
         }
-        if (add_hash) {
-            url = url + location.hash;
+        if (!only_path) {
+            url = url + location.search + location.hash;
         }
         return url;
     },
-    'getUrl': function (file, url) {
-        return (url ? url : this.getLocation()).replace(/\/$/, '') + (file ? '/' + file.replace(/^\//g, '') : '');
+    'getUrl': function (path, url) {
+        return this.getLocation(path, false, true, url);
     },
     'getUrlDetails': function (href) {
         var parser = document.createElement("a");
