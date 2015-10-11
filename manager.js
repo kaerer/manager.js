@@ -1,5 +1,5 @@
 /**
- * v.2.6.1
+ * v.2.6.3
  *
  * Requirements jQuery, Yii2 js lib
  * Created by erce on 21/07/15.
@@ -10,9 +10,9 @@ var adsbygoogle;
 
 var manager = {
     'debug': true,
-    'csrf': false,
     'cache': {},
     'config': {},
+    'facebook_app_id': '',
     'getCache': function (key, default_value, set_cache) {
         set_cache = set_cache ? set_cache : false;
         if (this.isset(this.cache[key])) {
@@ -176,11 +176,34 @@ var manager = {
             }
         }
     },
-    'facebook': {
+    'twitter': {
         'init': function (lang) {
+            !function (d, s, id) {
+                var js, fjs = d.getElementsByTagName(s)[0], p = /^http:/.test(d.location) ? 'http' : 'https';
+                if (!d.getElementById(id)) {
+                    js = d.createElement(s);
+                    js.id = id;
+                    js.src = p + "://platform.twitter.com/widgets.js";
+                    fjs.parentNode.insertBefore(js, fjs);
+                }
+            }(document, "script", "twitter-wjs");
+        },
+        'share': function (url, text) {
+            if (typeof url == "undefined") return;
+            if (url.search('http') == -1) {
+                url = 'http:' + url;
+            }
+
+            url = 'https://twitter.com/share?url=' + url + (typeof text != "undefined" ? ('&text=' + text) : '');
+
+            manager.openPopup(url, 500, 300);
+        }
+    },
+    'facebook': {
+        'init': function (lang, app_id) {
             window.fbAsyncInit = function () {
                 FB.init({
-                    appId: manager.facebook_app_id,
+                    appId: app_id ? app_id : manager.facebook_app_id,
                     xfbml: true,
                     version: 'v2.3'
                 });
@@ -196,18 +219,30 @@ var manager = {
                 js.src = "//connect.facebook.net/" + lang + "/sdk.js";
                 fjs.parentNode.insertBefore(js, fjs);
             }(document, 'script', 'facebook-jssdk'));
+        },
+        'share': function (url) {
+            if (typeof url == "undefined") return;
+            if (url.search('http') == -1) {
+                url = 'http:' + url;
+            }
+            FB.ui(
+                {
+                    method: 'share',
+                    href: url
+                }, function (response) {
+                });
         }
     },
     'getLocation': function (path, get_params, only_path, other_url) {
         var url = (other_url ? other_url : (location.protocol + '//' + location.host).replace(/[\/]+$/, '')) + '/' + (path ? path : location.pathname).replace(/^[\/]+/, '');
         only_path = only_path ? true : false;
-        if (get_params) {
+        if (get_params && get_params.length) {
             url += ((url.indexOf("?") == -1) ? "?" : "&");
             var c = manager.countObject(get_params);
             var i = 1;
             $.each(get_params, function (k, v) {
                 url += k + '=' + v + (i++ < c ? '&' : '');
-                manager.log([k, v, c, get_params, i]);
+                //manager.log([k, v, c, get_params, i]);
             });
         }
         if (!only_path) {
@@ -319,5 +354,3 @@ var manager = {
         }
     }
 };
-
-window.onerror = manager.handleError;
