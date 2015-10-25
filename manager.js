@@ -8,11 +8,21 @@
 
 
 var adsbygoogle;
+if (!window.console) {
+    var tmp = function () {
+    };
+    window.console = {
+        log: tmp,
+        warn: tmp,
+        error: tmp,
+        debug: tmp,
+        info: tmp
+    };
+}
 
 var $ = $ || {},
     jQuery = jQuery || {},
-    FB = FB || {},
-    console = console || {};
+    FB = FB || {};
 
 var manager = (function (window, document, jQuery, FB) {
     "use strict";
@@ -56,12 +66,15 @@ var manager = (function (window, document, jQuery, FB) {
                 box_loading.fadeOut('slow');
             }
         },
-        'log': function (msg, name) {
-            if(!this.isset(name)){
+        'log': function (msg, name, type) {
+            if (!this.isset(name)) {
                 name = 'Log: ';
             }
-            if (this.debug && typeof console !== "undefined") {
-                console.log(name, msg);
+            if (!this.isset(type)) {
+                type = 'log';
+            }
+            if (this.debug && manager.isset(window.console)) {
+                window.console[type](name, msg);
             }
         },
         'handleError': function (errorMsg, url, lineNumber, column, errorObj) {
@@ -166,6 +179,9 @@ var manager = (function (window, document, jQuery, FB) {
         'isset': function (value) {
             return (typeof value !== "undefined");
         },
+        'isFunction': function (obj) {
+            return !!(obj && obj.constructor && obj.call && obj.apply);
+        },
         'google': {
             'analytics': {
                 'init': function (id) {
@@ -200,7 +216,7 @@ var manager = (function (window, document, jQuery, FB) {
         },
         'twitter': {
             'init': function () {
-                !function (d, s, id) {
+                !((function (d, s, id) {
                     var js, fjs = d.getElementsByTagName(s)[0], p = /^http:/.test(d.location) ? 'http' : 'https';
                     if (!d.getElementById(id)) {
                         js = d.createElement(s);
@@ -208,7 +224,7 @@ var manager = (function (window, document, jQuery, FB) {
                         js.src = p + "://platform.twitter.com/widgets.js";
                         fjs.parentNode.insertBefore(js, fjs);
                     }
-                }(document, "script", "twitter-wjs");
+                })(document, "script", "twitter-wjs"));
             },
             'share': function (url, text) {
                 if (typeof url === "undefined") {
@@ -226,11 +242,15 @@ var manager = (function (window, document, jQuery, FB) {
         'facebook': {
             'init': function (lang, app_id) {
                 window.fbAsyncInit = function () {
-                    FB.init({
-                        appId: app_id ? app_id : manager.facebook_app_id,
-                        xfbml: true,
-                        version: 'v2.3'
-                    });
+                    var init_obj = {
+                        xfbml: false,
+                        version: 'v2.4', status: true, cookie: true
+                    };
+                    app_id = app_id ? app_id : manager.facebook_app_id;
+                    if (app_id) {
+                        init_obj.appId = app_id;
+                    }
+                    FB.init(init_obj);
                 };
                 lang = lang ? lang : 'en_US';
                 (function (d, s, id) {
@@ -243,6 +263,12 @@ var manager = (function (window, document, jQuery, FB) {
                     js.src = "//connect.facebook.net/" + lang + "/sdk.js";
                     fjs.parentNode.insertBefore(js, fjs);
                 }(document, 'script', 'facebook-jssdk'));
+            },
+            'run_fbml': function (element) {
+                FB.XFBML.parse(element);
+            },
+            'sizeChangeCallback': function () {
+                FB.Canvas.setSize();
             },
             'share': function (url) {
                 if (typeof url === "undefined") {
