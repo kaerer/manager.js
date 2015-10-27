@@ -33,11 +33,10 @@ var manager = (function (window, document, jQuery, FB) {
         'config': {},
         'facebook_app_id': '',
         'getCache': function (key, default_value, set_cache) {
-            set_cache = set_cache ? set_cache : false;
             if (this.isset(this.cache[key])) {
                 return this.cache[key];
             } else {
-                return set_cache ? this.setCache(key, default_value) : default_value;
+                return !!set_cache ? this.setCache(key, default_value) : default_value;
             }
         },
         'setCache': function (key, value) {
