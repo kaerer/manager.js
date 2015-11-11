@@ -1,9 +1,12 @@
 /**
- * v.2.8.1
+ * v.2.9.1
  *
  * Requirements jQuery, Yii2 js lib
  * Created by erce on 21/07/15.
+ *
  * @author erce.erozbek@gmail.com
+ *
+ * https://github.com/kaerer/manager.js
  */
 
 
@@ -21,10 +24,9 @@ if (!window.console) {
 }
 
 var $ = $ || {},
-    jQuery = jQuery || {},
-    FB = FB || {};
+    jQuery = jQuery || {};
 
-var manager = (function (window, document, jQuery, FB) {
+var manager = (function (window, document, jQuery) {
     "use strict";
 
     return {
@@ -206,14 +208,16 @@ var manager = (function (window, document, jQuery, FB) {
                     window['ga'].apply(null, arguments);
                 }
             },
-            'adwords': {
+            'adsense': {
                 'init': function () {
                     manager.add.js('//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js');
                 },
                 'reload': function () {
                     (adsbygoogle = window.adsbygoogle || []).push({});
                 }
-            }
+            }//,
+            //'adwords': manager.google.adsense
+
         },
         'twitter': {
             'init': function () {
@@ -235,7 +239,7 @@ var manager = (function (window, document, jQuery, FB) {
                     url = 'http:' + url;
                 }
 
-                url = 'https://twitter.com/intent/tweet?url=' + url + (manager.isset(text) ? ('&text=' + encodeURIComponent(text)) : '');
+                url = 'https://twitter.com/intent/tweet?url=' + encodeURIComponent(url) + (manager.isset(text) ? ('&text=' + encodeURIComponent(text)) : '');
                 manager.openPopup(url, 500, 300);
             }
         },
@@ -250,7 +254,7 @@ var manager = (function (window, document, jQuery, FB) {
                     if (app_id) {
                         init_obj.appId = app_id;
                     }
-                    FB.init(init_obj);
+                    window.FB.init(init_obj);
                 };
                 lang = lang ? lang : 'en_US';
                 (function (d, s, id) {
@@ -265,10 +269,10 @@ var manager = (function (window, document, jQuery, FB) {
                 }(document, 'script', 'facebook-jssdk'));
             },
             'run_fbml': function (element) {
-                FB.XFBML.parse(element);
+                window.FB.XFBML.parse(element);
             },
             'sizeChangeCallback': function () {
-                FB.Canvas.setSize();
+                window.FB.Canvas.setSize();
             },
             'share': function (url) {
                 if (typeof url === "undefined") {
@@ -277,7 +281,7 @@ var manager = (function (window, document, jQuery, FB) {
                 if (url.search('http') === -1) {
                     url = 'http:' + url;
                 }
-                FB.ui(
+                window.FB.ui(
                     {
                         method: 'share',
                         href: url
@@ -293,10 +297,10 @@ var manager = (function (window, document, jQuery, FB) {
                 url += ((url.indexOf("?") === -1) ? "?" : "&");
                 var i = 1;
                 $.each(get_params, function (k, v) {
-                    url += k + '=' + v + (i++ < c ? '&' : '');
+                    if(!!v) url += k + '=' + v + (i++ < c ? '&' : '');
                     //manager.log([k, v, c, get_params, i]);
                 });
-                url = url.substring(0, url.length - 1);
+                //url = url.substring(0, url.length - 1);
                 url = url + location.hash;
             }
             return url;
@@ -424,4 +428,4 @@ var manager = (function (window, document, jQuery, FB) {
         }
     };
 
-})(window, document, jQuery, FB);
+})(window, document, jQuery);
