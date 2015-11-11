@@ -89,6 +89,8 @@ var manager = (function (window, document, jQuery, FB) {
                 }
             }
             return count;
+
+            //return Object.keys(obj).length;
         },
         'mergeObjects': function (obj1, obj2) {
             var obj3 = {};
@@ -233,8 +235,7 @@ var manager = (function (window, document, jQuery, FB) {
                     url = 'http:' + url;
                 }
 
-                url = 'https://twitter.com/share?url=' + url + (typeof text !== "undefined" ? ('&text=' + text) : '');
-
+                url = 'https://twitter.com/intent/tweet?url=' + url + (manager.isset(text) ? ('&text=' + encodeURIComponent(text)) : '');
                 manager.openPopup(url, 500, 300);
             }
         },
@@ -286,20 +287,35 @@ var manager = (function (window, document, jQuery, FB) {
         },
         'getLocation': function (path, get_params, only_path, other_url) {
             var url = (other_url ? other_url : (location.protocol + '//' + location.host).replace(/[\/]+$/, '')) + '/' + (path ? path : location.pathname).replace(/^[\/]+/, '');
-            only_path = only_path ? true : false;
-            if (get_params && get_params.length) {
+            var c = 0;
+            get_params = manager.mergeObjects(manager.getLocationParams(), get_params);
+            if (!(!!only_path) && get_params && (c = Object.keys(get_params).length)) {
                 url += ((url.indexOf("?") === -1) ? "?" : "&");
-                var c = manager.countObject(get_params);
                 var i = 1;
                 $.each(get_params, function (k, v) {
                     url += k + '=' + v + (i++ < c ? '&' : '');
                     //manager.log([k, v, c, get_params, i]);
                 });
-            }
-            if (!only_path) {
-                url = url + location.search + location.hash;
+                url = url.substring(0, url.length - 1);
+                url = url + location.hash;
             }
             return url;
+        },
+        'getLocationParams': function() {
+            var a = window.location.search.substr(1).split('&');
+            if (a === "") {
+                return {};
+            }
+            var b = {};
+            for (var i = 0; i < a.length; ++i)
+            {
+                var p=a[i].split('=');
+                if (p.length !== 2) {
+                    continue;
+                }
+                b[p[0]] = decodeURIComponent(p[1].replace(/\+/g, " "));
+            }
+            return b;
         },
         'getUrl': function (path, url) {
             return this.getLocation(path, false, true, url);
