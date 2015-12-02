@@ -12,14 +12,17 @@
 
 var adsbygoogle;
 if (!window.console) {
-    var tmp = function () {
-    };
     window.console = {
-        log: tmp,
-        warn: tmp,
-        error: tmp,
-        debug: tmp,
-        info: tmp
+        log: function () {
+        },
+        warn: function () {
+        },
+        error: function () {
+        },
+        debug: function () {
+        },
+        info: function () {
+        }
     };
 }
 
@@ -35,46 +38,46 @@ var manager = (function (window, document, jQuery) {
         'config': {},
         'facebook_app_id': '',
         'getCache': function (key, default_value, set_cache) {
-            if (this.isset(this.cache[key])) {
-                return this.cache[key];
+            if (manager.isset(manager.cache[key])) {
+                return manager.cache[key];
             } else {
-                return !!set_cache ? this.setCache(key, default_value) : default_value;
+                return !!set_cache ? manager.setCache(key, default_value) : default_value;
             }
         },
         'setCache': function (key, value) {
             value = value ? value : false;
-            this.cache[key] = value;
+            manager.cache[key] = value;
             return value;
         },
         'getBox': function (selector, refresh) {
-            var box = refresh ? false : this.getCache(selector);
+            var box = refresh ? false : manager.getCache(selector);
             if (!box) {
                 box = jQuery(selector);
-                this.setCache(selector, box);
+                manager.setCache(selector, box);
             }
             return box;
         },
         'loading': function (open) {
-            var box_loading = this.getBox('.loading');
+            var box_loading = manager.getBox('.loading');
             var key = 'body_overflow-y';
             var body = jQuery('body');
             if (open) {
-                this.setCache(key, body.css('overflow-y'));
+                manager.setCache(key, body.css('overflow-y'));
                 body.css('overflow-y', 'hidden');
                 box_loading.fadeIn('slow');
             } else {
-                body.css('overflow-y', this.getCache(key));
+                body.css('overflow-y', manager.getCache(key));
                 box_loading.fadeOut('slow');
             }
         },
         'log': function (msg, name, type) {
-            if (!this.isset(name)) {
+            if (!manager.isset(name)) {
                 name = 'Log: ';
             }
-            if (!this.isset(type)) {
+            if (!manager.isset(type)) {
                 type = 'log';
             }
-            if (this.debug && manager.isset(window.console)) {
+            if (manager.debug && manager.isset(window.console)) {
                 window.console[type](name, msg);
             }
         },
@@ -133,7 +136,7 @@ var manager = (function (window, document, jQuery) {
             }
 
             // Handle Object
-            if (!this.isset(jQuery) && obj instanceof Object) {
+            if (!manager.isset(jQuery) && obj instanceof Object) {
                 copy = {};
                 for (var attr in obj) {
                     if (obj.hasOwnProperty(attr)) {
@@ -152,25 +155,25 @@ var manager = (function (window, document, jQuery) {
             throw new Error("Unable to copy obj! Its type isn't supported.");
         },
         'getAllConfig': function () {
-            return this.config;
+            return manager.config;
         },
         'setAllConfig': function (config) {
-            this.config = config;
+            manager.config = config;
         },
         'getConfig': function (key) {
-            if (manager.isset(this.config[key])) {
-                return this.config[key];
+            if (manager.isset(manager.config[key])) {
+                return manager.config[key];
             } else {
-                this.log('config key not found(' + key + ')', 'Error');
+                manager.log('config key not found(' + key + ')', 'Error');
                 return false;
             }
         },
         'setConfig': function (key, value) {
-            this.config[key] = value;
+            manager.config[key] = value;
         },
         'mergeConfig': function (config) {
             if (typeof config === "object") {
-                this.setAllConfig(manager.mergeObjects(this.config, config));
+                manager.setAllConfig(manager.mergeObjects(manager.config, config));
             }
         },
         'getLast': function (arr) {
@@ -221,7 +224,7 @@ var manager = (function (window, document, jQuery) {
         },
         'twitter': {
             'init': function () {
-                !((function (d, s, id) {
+                var obj = !(function (d, s, id) {
                     var js, fjs = d.getElementsByTagName(s)[0], p = /^http:/.test(d.location) ? 'http' : 'https';
                     if (!d.getElementById(id)) {
                         js = d.createElement(s);
@@ -229,14 +232,21 @@ var manager = (function (window, document, jQuery) {
                         js.src = p + "://platform.twitter.com/widgets.js";
                         fjs.parentNode.insertBefore(js, fjs);
                     }
-                })(document, "script", "twitter-wjs"));
+                })(document, "script", "twitter-wjs");
+                manager.setCache('twitter_init', obj);
             },
-            'share': function (url, text) {
+            'share': function (url, text, hashtags) {
                 if (typeof url === "undefined") {
                     return;
                 }
                 if (url.search('http') === -1) {
                     url = 'http:' + url;
+                }
+                //"https://twitter.com/intent/tweet?text=asdf&via=Hotbird&hashtags=hashtag1,hashtag2,hashtag3"
+                //https://dev.twitter.com/web/tweet-button
+
+                if (text) {
+                    text = (text.length + url.length > 140 - 4) ? (text.substr(0, (140 - url.length - 4)) + '...') : text;
                 }
 
                 url = 'https://twitter.com/intent/tweet?url=' + encodeURIComponent(url) + (manager.isset(text) ? ('&text=' + encodeURIComponent(text)) : '');
@@ -297,7 +307,9 @@ var manager = (function (window, document, jQuery) {
                 url += ((url.indexOf("?") === -1) ? "?" : "&");
                 var i = 1;
                 $.each(get_params, function (k, v) {
-                    if(!!v) url += k + '=' + v + (i++ < c ? '&' : '');
+                    if (!!v) {
+                        url += k + '=' + v + ((i++) < c ? '&' : '');
+                    }
                     //manager.log([k, v, c, get_params, i]);
                 });
                 //url = url.substring(0, url.length - 1);
@@ -305,15 +317,14 @@ var manager = (function (window, document, jQuery) {
             }
             return url;
         },
-        'getLocationParams': function() {
+        'getLocationParams': function () {
             var a = window.location.search.substr(1).split('&');
             if (a === "") {
                 return {};
             }
             var b = {};
-            for (var i = 0; i < a.length; ++i)
-            {
-                var p=a[i].split('=');
+            for (var i = 0; i < a.length; ++i) {
+                var p = a[i].split('=');
                 if (p.length !== 2) {
                     continue;
                 }
@@ -322,7 +333,7 @@ var manager = (function (window, document, jQuery) {
             return b;
         },
         'getUrl': function (path, url) {
-            return this.getLocation(path, false, true, url);
+            return manager.getLocation(path, false, true, url);
         },
         'getUrlDetails': function (href) {
             var parser = document.createElement("a");
@@ -362,11 +373,11 @@ var manager = (function (window, document, jQuery) {
             return Math.floor(Math.random() * max);
         },
         'getCsrfCode': function () {
-            if (!this.csrf) {
-                this.csrf = jQuery('meta[name=csrf-token]').prop('content');
+            if (!manager.csrf) {
+                manager.csrf = jQuery('meta[name=csrf-token]').prop('content');
             }
 
-            return this.csrf;
+            return manager.csrf;
             //return yii.getCsrfToken();
         },
         'scrollTo': function (target, offset, animation_time) {
@@ -379,8 +390,8 @@ var manager = (function (window, document, jQuery) {
         'openPopup': function (window_url, window_width, window_height, window_name) {
             var width = window_width,
                 height = window_height,
-                left = parseInt((jQuery(window).width() - width) / 2),
-                top = parseInt((jQuery(window).height() - height) / 2),
+                left = parseInt((jQuery(window).width() - width) / 2, 10),
+                top = parseInt((jQuery(window).height() - height) / 2, 10),
                 url = window_url,
                 opts = "width=" + width + ", height=" + height + ", top=" + top + ", left=" + left;
 
@@ -402,18 +413,18 @@ var manager = (function (window, document, jQuery) {
         },
         'loader': function (show, selector) {
             selector = selector ? selector : '.preload';
-            var loader = this.getBox(selector, true);
-            var body_overflow = this.getCache('body_overflow');
+            var loader = manager.getBox(selector, true);
+            var body_overflow = manager.getCache('body_overflow');
             if (!body_overflow) {
-                body_overflow = this.getBox('body', true).css('overflow');
-                this.setCache('body_overflow', body_overflow);
+                body_overflow = manager.getBox('body', true).css('overflow');
+                manager.setCache('body_overflow', body_overflow);
             }
             if (show) {
                 loader.show();
-                this.getBox('body', true).css('overflow', 'hidden');
+                manager.getBox('body', true).css('overflow', 'hidden');
             } else {
                 loader.hide();
-                this.getBox('body', true).css('overflow', body_overflow);
+                manager.getBox('body', true).css('overflow', body_overflow);
             }
         },
         'add': {
