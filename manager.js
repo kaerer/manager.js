@@ -38,7 +38,7 @@ var manager = (function (window, document, jQuery) {
         'config': {},
         'facebook_app_id': '',
         'getCache': function (key, default_value, set_cache) {
-            if (manager.isset(manager.cache[key])) {
+            if (manager.isSet(manager.cache[key])) {
                 return manager.cache[key];
             } else {
                 return !!set_cache ? manager.setCache(key, default_value) : default_value;
@@ -71,13 +71,13 @@ var manager = (function (window, document, jQuery) {
             }
         },
         'log': function (msg, name, type) {
-            if (!manager.isset(name)) {
+            if (!manager.isSet(name)) {
                 name = 'Log: ';
             }
-            if (!manager.isset(type)) {
+            if (!manager.isSet(type)) {
                 type = 'log';
             }
-            if (manager.debug && manager.isset(window.console)) {
+            if (manager.debug && manager.isSet(window.console)) {
                 window.console[type](name, msg);
             }
         },
@@ -99,12 +99,12 @@ var manager = (function (window, document, jQuery) {
         },
         'mergeObjects': function (obj1, obj2) {
             var obj3 = {};
-            if (obj1 && (obj1 !== null && typeof obj1 === 'object')) {
+            if (manager.isSet(obj1) && manager.isObject(obj1)) {
                 for (var attribute1 in obj1) {
                     obj3[attribute1] = obj1[attribute1];
                 }
             }
-            if (obj2 && (obj2 !== null && typeof obj2 === 'object')) {
+            if (manager.isSet(obj2) && manager.isObject(obj2)) {
                 for (var attribute2 in obj2) {
                     obj3[attribute2] = obj2[attribute2];
                 }
@@ -115,7 +115,7 @@ var manager = (function (window, document, jQuery) {
             var copy;
 
             // Handle the 3 simple types, and null or undefined
-            if (null === obj || "object" !== typeof obj) {
+            if (null === obj || !manager.isObject(obj)) {
                 return obj;
             }
 
@@ -136,7 +136,7 @@ var manager = (function (window, document, jQuery) {
             }
 
             // Handle Object
-            if (!manager.isset(jQuery) && obj instanceof Object) {
+            if (!manager.isSet(jQuery) && obj instanceof Object) {
                 copy = {};
                 for (var attr in obj) {
                     if (obj.hasOwnProperty(attr)) {
@@ -161,7 +161,7 @@ var manager = (function (window, document, jQuery) {
             manager.config = config;
         },
         'getConfig': function (key) {
-            if (manager.isset(manager.config[key])) {
+            if (manager.isSet(manager.config[key])) {
                 return manager.config[key];
             } else {
                 manager.log('config key not found(' + key + ')', 'Error');
@@ -172,7 +172,7 @@ var manager = (function (window, document, jQuery) {
             manager.config[key] = value;
         },
         'mergeConfig': function (config) {
-            if (typeof config === "object") {
+            if (manager.isObject(config)) {
                 manager.setAllConfig(manager.mergeObjects(manager.config, config));
             }
         },
@@ -182,13 +182,49 @@ var manager = (function (window, document, jQuery) {
         'getFirst': function (arr) {
             return arr[Object.keys(arr)[0]];
         },
-        'isset': function (value) {
+        'isSet': function (value) {
             return (typeof value !== "undefined");
+        },
+        'isObject': function (value) {
+            return (typeof value === "object");
         },
         'isFunction': function (obj) {
             return !!(obj && obj.constructor && obj.call && obj.apply);
         },
         'google': {
+            'plus': {
+                'init': function () {
+                    manager.add.js('//apis.google.com/js/platform.js');
+                },
+                'addButton': {
+                    'follow': function (selector, page_id, params) {
+                        var default_params = {
+                            'rel': 'author',
+                            'height': '15',
+                            'annotation': 'bubble'
+                        };
+
+                        params = manager.mergeObjects(default_params, (params ? params : []));
+                        //https://developers.google.com/+/web/follow/
+                        var btn = $('<div>').addClass('g-follow');
+
+                        btn.data('href', ('https://plus.google.com/' + page_id));
+                        $.each(params, function (k, v) {
+                            btn.data(k, v);
+                        });
+
+                        if (selector) {
+                            manager.getBox(selector).html(btn);
+                        } else {
+                            return btn;
+                        }
+                    },
+                    'badge': function () {
+                        //https://developers.google.com/+/web/badge/
+                    }
+                }
+
+            },
             'analytics': {
                 'init': function (id) {
                     (function (i, s, o, g, r, a, m) {
@@ -236,7 +272,7 @@ var manager = (function (window, document, jQuery) {
                 manager.setCache('twitter_init', obj);
             },
             'share': function (url, text, hashtags) {
-                if (typeof url === "undefined") {
+                if (!manager.isSet(url)) {
                     return;
                 }
                 if (url.search('http') === -1) {
@@ -249,7 +285,7 @@ var manager = (function (window, document, jQuery) {
                     text = (text.length + url.length > 140 - 4) ? (text.substr(0, (140 - url.length - 4)) + '...') : text;
                 }
 
-                url = 'https://twitter.com/intent/tweet?url=' + encodeURIComponent(url) + (manager.isset(text) ? ('&text=' + encodeURIComponent(text)) : '');
+                url = 'https://twitter.com/intent/tweet?url=' + encodeURIComponent(url) + (manager.isSet(text) ? ('&text=' + encodeURIComponent(text)) : '');
                 manager.openPopup(url, 500, 300);
             }
         },
@@ -285,7 +321,7 @@ var manager = (function (window, document, jQuery) {
                 window.FB.Canvas.setSize();
             },
             'share': function (url) {
-                if (typeof url === "undefined") {
+                if (!manager.isSet(url)) {
                     return;
                 }
                 if (url.search('http') === -1) {
@@ -395,11 +431,17 @@ var manager = (function (window, document, jQuery) {
                 url = window_url,
                 opts = "width=" + width + ", height=" + height + ", top=" + top + ", left=" + left;
 
-            window_name = (typeof window_name !== "undefined" ? window_name : "_blank");
+            window_name = (manager.isSet(window_name) ? window_name : "_blank");
             window.open(url, window_name, opts);
         },
+        'openPage': function (window_url, window_name) {
+            if (!window_name) {
+                window_name = '_blank';
+            }
+            window.open(window_url, window_name);
+        },
         'putTemplateVariables': function (template, variable) {
-            if (typeof variable !== "object" || variable.length) {
+            if (!manager.isObject(variable) || variable.length) {
                 return template;
             }
             $.each(variable, function (k, v) {
