@@ -368,6 +368,62 @@ var manager = (function (window, document, jQuery) {
             }
             return b;
         },
+        'getTimezone': function () {
+            /**
+             * http://www.onlineaspect.com/2007/06/08/auto-detect-a-time-zone-with-javascript/
+             * more accurate https://bitbucket.org/pellepim/jstimezonedetect ?
+             */
+            /*
+             var rightNow = new Date();
+             var jan1 = new Date(rightNow.getFullYear(), 0, 1, 0, 0, 0, 0);
+             var temp = jan1.toGMTString();
+             var jan2 = new Date(temp.substring(0, temp.lastIndexOf(" ") - 1));
+             var std_time_offset = (jan1 - jan2) / (1000 * 60 * 60);
+
+             var june1 = new Date(rightNow.getFullYear(), 6, 1, 0, 0, 0, 0);
+             temp = june1.toGMTString();
+             var june2 = new Date(temp.substring(0, temp.lastIndexOf(" ") - 1));
+             var daylight_time_offset = (june1 - june2) / (1000 * 60 * 60);
+             var dst;
+             if (std_time_offset == daylight_time_offset) {
+             dst = "0"; // daylight savings time is NOT observed
+             } else {
+             dst = "1"; // daylight savings time is observed
+             }
+
+             return {
+             'time_offset': std_time_offset,
+             'dst': dst
+             }
+             */
+
+            var now = new Date();
+            return {
+                'hour': now.getTimezoneOffset(),
+                'seconds': now.getTimezoneOffset() * 60
+            };
+        },
+        'cookie': {
+            'set': function (cname, cvalue, days) {
+                var d = new Date();
+                d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
+                var expires = "expires=" + d.toUTCString();
+                document.cookie = cname + "=" + cvalue + "; " + expires;
+            },
+            'get': function (cname) {
+                var name = cname + "=";
+                var ca = document.cookie.split(';');
+                for (var i = 0; i < ca.length; i++) {
+                    var c = ca[i];
+                    while (c.charAt(0) == ' ') c = c.substring(1);
+                    if (c.indexOf(name) == 0) return c.substring(name.length, c.length);
+                }
+                return "";
+            },
+            'delete': function (cname) {
+                manager.cookie.set(cname, null, 0);
+            }
+        },
         'getUrl': function (path, url) {
             return manager.getLocation(path, false, true, url);
         },
@@ -405,8 +461,23 @@ var manager = (function (window, document, jQuery) {
         'redirectUrl': function (url) {
             window.location.href = url;
         },
-        'getRandomNumber': function (max) {
-            return Math.floor(Math.random() * max);
+        'getRandomNumber': function (max, min, returnInt) {
+            if (!manager.isSet(returnInt)) {
+                returnInt = true
+            }
+            if (!manager.isSet(max)) {
+                max = 1
+            }
+            if (!manager.isSet(min)) {
+                if (max == 1) {
+                    min = 0
+                } else {
+                    min = 1
+                }
+            }
+
+            var result = min + Math.random() * (max - min);
+            return returnInt ? parseInt(result, 10) : result;
         },
         'getCsrfCode': function () {
             if (!manager.csrf) {
