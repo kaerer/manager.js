@@ -57,19 +57,6 @@ var manager = (function (window, document, jQuery) {
             }
             return box;
         },
-        'loading': function (open) {
-            var box_loading = manager.getBox('.loading');
-            var key = 'body_overflow-y';
-            var body = jQuery('body');
-            if (open) {
-                manager.setCache(key, body.css('overflow-y'));
-                body.css('overflow-y', 'hidden');
-                box_loading.fadeIn('slow');
-            } else {
-                body.css('overflow-y', manager.getCache(key));
-                box_loading.fadeOut('slow');
-            }
-        },
         'log': function (msg, name, type) {
             if (!manager.isSet(name)) {
                 name = 'Log: ';
@@ -191,36 +178,353 @@ var manager = (function (window, document, jQuery) {
         'isFunction': function (obj) {
             return !!(obj && obj.constructor && obj.call && obj.apply);
         },
+        'getRandomNumber': function (max, min, returnInt) {
+            if (!manager.isSet(returnInt)) {
+                returnInt = true
+            }
+            if (!manager.isSet(max)) {
+                max = 1
+            }
+            if (!manager.isSet(min)) {
+                if (max == 1) {
+                    min = 0
+                } else {
+                    min = 1
+                }
+            }
+
+            var result = min + Math.random() * (max - min);
+            return returnInt ? parseInt(result, 10) : result;
+        },
+        'getLocation': function (path, get_params, only_path, other_url) {
+            var url = (other_url ? other_url : (location.protocol + '//' + location.host).replace(/[\/]+$/, '')) + '/' + (path ? path : location.pathname).replace(/^[\/]+/, '');
+            var c = 0;
+            get_params = manager.mergeObjects(manager.getLocationParams(), get_params);
+            if (!(!!only_path) && get_params && (c = Object.keys(get_params).length)) {
+                url += ((url.indexOf("?") === -1) ? "?" : "&");
+                var i = 1;
+                $.each(get_params, function (k, v) {
+                    if (!!v) {
+                        url += k + '=' + v + ((i++) < c ? '&' : '');
+                    }
+                    //manager.log([k, v, c, get_params, i]);
+                });
+                //url = url.substring(0, url.length - 1);
+                url = url + location.hash;
+            }
+            return url;
+        },
+        'getLocationParams': function () {
+            var a = window.location.search.substr(1).split('&');
+            if (a === "") {
+                return {};
+            }
+            var b = {};
+            for (var i = 0; i < a.length; ++i) {
+                var p = a[i].split('=');
+                if (p.length !== 2) {
+                    continue;
+                }
+                b[p[0]] = decodeURIComponent(p[1].replace(/\+/g, " "));
+            }
+            return b;
+        },
+        'getTimezone': function () {
+            /**
+             * http://www.onlineaspect.com/2007/06/08/auto-detect-a-time-zone-with-javascript/
+             * more accurate https://bitbucket.org/pellepim/jstimezonedetect ?
+             */
+            /*
+             var rightNow = new Date();
+             var jan1 = new Date(rightNow.getFullYear(), 0, 1, 0, 0, 0, 0);
+             var temp = jan1.toGMTString();
+             var jan2 = new Date(temp.substring(0, temp.lastIndexOf(" ") - 1));
+             var std_time_offset = (jan1 - jan2) / (1000 * 60 * 60);
+
+             var june1 = new Date(rightNow.getFullYear(), 6, 1, 0, 0, 0, 0);
+             temp = june1.toGMTString();
+             var june2 = new Date(temp.substring(0, temp.lastIndexOf(" ") - 1));
+             var daylight_time_offset = (june1 - june2) / (1000 * 60 * 60);
+             var dst;
+             if (std_time_offset == daylight_time_offset) {
+             dst = "0"; // daylight savings time is NOT observed
+             } else {
+             dst = "1"; // daylight savings time is observed
+             }
+
+             return {
+             'time_offset': std_time_offset,
+             'dst': dst
+             }
+             */
+
+            var now = new Date();
+            return {
+                'hour': now.getTimezoneOffset(),
+                'seconds': now.getTimezoneOffset() * 60
+            };
+        },
+        'createDateAsUTC': function (date) {
+            return new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), date.getHours(), date.getMinutes(), date.getSeconds()));
+        },
+        'convertDateToUTC': function (date) {
+            return new Date(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), date.getUTCHours(), date.getUTCMinutes(), date.getUTCSeconds());
+        },
+        'cookie': {
+            'set': function (cname, cvalue, days) {
+                var d = new Date();
+                d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
+                var expires = "expires=" + d.toUTCString();
+                document.cookie = cname + "=" + cvalue + "; " + expires;
+            },
+            'get': function (cname) {
+                var name = cname + "=";
+                var ca = document.cookie.split(';');
+                for (var i = 0; i < ca.length; i++) {
+                    var c = ca[i];
+                    while (c.charAt(0) == ' ') c = c.substring(1);
+                    if (c.indexOf(name) == 0) return c.substring(name.length, c.length);
+                }
+                return "";
+            },
+            'delete': function (cname) {
+                manager.cookie.set(cname, null, 0);
+            }
+        },
+        'getUrl': function (path, url) {
+            return manager.getLocation(path, false, true, url);
+        },
+        'getUrlDetails': function (href) {
+            var parser = document.createElement("a");
+            parser.href = href;
+            var params = {};
+            if (parser.search) {
+                params = (function (a) {
+                    var b = {};
+                    for (var i = 0; i < a.length; ++i) {
+                        var p = a[i].split('=', 2);
+                        if (p.length === 1) {
+                            b[p[0]] = "";
+                        }
+                        else {
+                            b[p[0]] = decodeURIComponent(p[1].replace(/\+/g, " "));
+                        }
+                    }
+                    return b;
+                })(parser.search.substr(1).split('&'));
+            }
+
+            return {
+                'protocol': parser.protocol, // => "http:"
+                'host': parser.host,     // => "example.com:3000"
+                'hostname': parser.hostname, // => "example.com"
+                'port': parser.port,     // => "3000"
+                'pathname': parser.pathname, // => "/pathname/"
+                'hash': parser.hash,     // => "#hash"
+                'search': parser.search,   // => "?search=test"
+                'params': params   // => "{search=test}"
+            };
+        },
+        'redirectUrl': function (url) {
+            window.location.href = url;
+        },
+        'openPopup': function (window_url, window_width, window_height, window_name) {
+            var width = window_width,
+                height = window_height,
+                left = parseInt((jQuery(window).width() - width) / 2, 10),
+                top = parseInt((jQuery(window).height() - height) / 2, 10),
+                url = window_url,
+                opts = "width=" + width + ", height=" + height + ", top=" + top + ", left=" + left;
+
+            window_name = (manager.isSet(window_name) ? window_name : "_blank");
+            window.open(url, window_name, opts);
+        },
+        'openPage': function (window_url, window_name) {
+            if (!window_name) {
+                window_name = '_blank';
+            }
+            window.open(window_url, window_name);
+        },
+        'scrollTo': function (target, offset, animation_time) {
+            offset = offset || 0;
+            animation_time = animation_time || 1000;
+            jQuery('html, body').animate({
+                'scrollTop': (target.offset().top - offset)
+            }, animation_time);
+        },
+        'getCsrfCode': function () {
+            if (!manager.csrf) {
+                manager.csrf = jQuery('meta[name=csrf-token]').prop('content');
+            }
+
+            return manager.csrf;
+            //return yii.getCsrfToken();
+        },
+        'putTemplateVariables': function (template, variable) {
+            if (!manager.isObject(variable) || variable.length) {
+                return template;
+            }
+            $.each(variable, function (k, v) {
+                var re = new RegExp('{{@(' + k + ')}}', 'gi');
+                var match;
+                while ((match = template.match(re))) {
+                    template = template.replace(match[0], v);
+                }
+            });
+            return template;
+        },
+        'loader': function (show, selector) {
+            selector = selector ? selector : '.preload';
+            var loader = manager.getBox(selector, true);
+            var body_overflow = manager.getCache('body_overflow');
+            if (!body_overflow) {
+                body_overflow = manager.getBox('body', true).css('overflow');
+                manager.setCache('body_overflow', body_overflow);
+            }
+            if (show) {
+                loader.show();
+                manager.getBox('body', true).css('overflow', 'hidden');
+            } else {
+                loader.hide();
+                manager.getBox('body', true).css('overflow', body_overflow);
+            }
+        },
+        'loading': function (open, selector) {
+            selector = selector ? selector : 'loading';
+            var body = jQuery('body');
+            var box_loading = manager.getBox('.' + selector, true);
+            if (box_loading.length == 0) {
+                box_loading = jQuery('<div>').addClass(selector);
+                body.append(box_loading);
+            }
+            var key = 'body_overflow-y';
+            if (open) {
+                manager.setCache(key, body.css('overflow-y'));
+                body.css('overflow-y', 'hidden');
+                box_loading.fadeIn('slow');
+            } else {
+                body.css('overflow-y', manager.getCache(key));
+                box_loading.fadeOut('slow');
+            }
+        },
         'google': {
             'plus': {
                 'init': function () {
                     manager.add.js('//apis.google.com/js/platform.js');
                 },
+                'render': function (type, box_id) {
+                    //switch (type){
+                    //case 'follow':
+                    //    gapi.follow.render(box_id);
+                    //    gapi.follow.go(box_id);
+                    //    break;
+                    //case 'badge_person':
+                    //    gapi.person.render(box_id);
+                    //    gapi.person.go(box_id);
+                    //    break;
+                    //case 'badge_page':
+                    //    gapi.page.render(box_id);
+                    //    gapi.page.go(box_id);
+                    //    break;
+                    //default:
+                    gapi.plusone.render(box_id);
+                    gapi.plusone.go(box_id);
+                    //        break;
+                    //}
+                },
                 'addButton': {
-                    'follow': function (selector, page_id, params) {
+                    "button_generator": function (type, selector, page_id, params, render) {
+                        render = manager.isSet(render) ? render : true;
+
+                        var btn_class;
+                        switch (type) {
+                            case 'follow':
+                                btn_class = 'g-follow';
+                                break;
+                            case 'badge_person':
+                                btn_class = 'g-person';
+                                break;
+                            default:
+                            case 'badge_page':
+                                btn_class = 'g-page';
+                                break;
+                        }
+
+                        if (page_id.indexOf('http') == -1) {
+                            page_id = 'https://plus.google.com/' + page_id;
+                        }
                         var default_params = {
-                            'rel': 'author',
-                            'height': '15',
-                            'annotation': 'bubble'
+                            'href': page_id
                         };
 
                         params = manager.mergeObjects(default_params, (params ? params : []));
-                        //https://developers.google.com/+/web/follow/
-                        var btn = $('<div>').addClass('g-follow');
+                        var btn = $('<div>').addClass(btn_class);
 
-                        btn.data('href', ('https://plus.google.com/' + page_id));
                         $.each(params, function (k, v) {
-                            btn.data(k, v);
+                            btn.attr('data-' + k, v);
                         });
 
                         if (selector) {
-                            manager.getBox(selector).html(btn);
+                            var a = manager.getBox(selector).html(btn);
+
+                            if (render) {
+                                var box_id = selector.attr('id');
+                                if (!box_id) {
+                                    box_id = 'btn_google_r' + manager.getRandomNumber(100, 999);
+                                    selector.attr('id', box_id);
+                                }
+
+                                manager.google.plus.render(type, box_id)
+                            }
                         } else {
                             return btn;
                         }
                     },
-                    'badge': function () {
-                        //https://developers.google.com/+/web/badge/
+                    'follow': function (selector, page_id, params, render) {
+                        /*
+                         <div class="g-follow" data-annotation="bubble" data-height="24" data-href="//plus.google.com/u/0/108093612240772468124" data-rel="author"></div>
+                         https://developers.google.com/+/web/follow/
+                         */
+                        var default_params = {
+                            'rel': 'publisher',
+                            'height': '24',
+                            'annotation': 'bubble'
+                        };
+
+                        params = manager.mergeObjects(default_params, (params ? params : []));
+                        return manager.google.plus.addButton.button_generator('follow', selector, page_id, params, render);
+                    },
+                    'badge_person': function (selector, page_id, params, render) {
+                        /*
+                         <div class="g-person" data-href="https://plus.google.com/{profileId}"></div>
+                         https://developers.google.com/+/web/badge/
+                         */
+                        var default_params = {
+                            'theme': 'dark',
+                            'width': '240',
+                            'showcoverphoto': 'true',
+                            'showtagline': 'true',
+                            'layout': 'landscape'
+                        };
+
+                        params = manager.mergeObjects(default_params, (params ? params : []));
+                        return manager.google.plus.addButton.button_generator('badge_person', selector, page_id, params, render);
+                    },
+                    'badge_page': function (selector, page_id, params, render) {
+                        /*
+                         <div class="g-person" data-href="https://plus.google.com/{profileId}"></div>
+                         https://developers.google.com/+/web/badge/
+                         */
+                        var default_params = {
+                            'theme': 'light',
+                            'width': '240',
+                            'showcoverphoto': 'true',
+                            'showtagline': 'true',
+                            'layout': 'landscape'
+                        };
+
+                        params = manager.mergeObjects(default_params, (params ? params : []));
+                        return manager.google.plus.addButton.button_generator('badge_page', selector, page_id, params, render);
                     }
                 }
 
@@ -256,7 +560,6 @@ var manager = (function (window, document, jQuery) {
                 }
             }//,
             //'adwords': manager.google.adsense
-
         },
         'twitter': {
             'init': function () {
@@ -333,211 +636,6 @@ var manager = (function (window, document, jQuery) {
                         href: url
                     }, function (response) {
                     });
-            }
-        },
-        'getLocation': function (path, get_params, only_path, other_url) {
-            var url = (other_url ? other_url : (location.protocol + '//' + location.host).replace(/[\/]+$/, '')) + '/' + (path ? path : location.pathname).replace(/^[\/]+/, '');
-            var c = 0;
-            get_params = manager.mergeObjects(manager.getLocationParams(), get_params);
-            if (!(!!only_path) && get_params && (c = Object.keys(get_params).length)) {
-                url += ((url.indexOf("?") === -1) ? "?" : "&");
-                var i = 1;
-                $.each(get_params, function (k, v) {
-                    if (!!v) {
-                        url += k + '=' + v + ((i++) < c ? '&' : '');
-                    }
-                    //manager.log([k, v, c, get_params, i]);
-                });
-                //url = url.substring(0, url.length - 1);
-                url = url + location.hash;
-            }
-            return url;
-        },
-        'getLocationParams': function () {
-            var a = window.location.search.substr(1).split('&');
-            if (a === "") {
-                return {};
-            }
-            var b = {};
-            for (var i = 0; i < a.length; ++i) {
-                var p = a[i].split('=');
-                if (p.length !== 2) {
-                    continue;
-                }
-                b[p[0]] = decodeURIComponent(p[1].replace(/\+/g, " "));
-            }
-            return b;
-        },
-        'getTimezone': function () {
-            /**
-             * http://www.onlineaspect.com/2007/06/08/auto-detect-a-time-zone-with-javascript/
-             * more accurate https://bitbucket.org/pellepim/jstimezonedetect ?
-             */
-            /*
-             var rightNow = new Date();
-             var jan1 = new Date(rightNow.getFullYear(), 0, 1, 0, 0, 0, 0);
-             var temp = jan1.toGMTString();
-             var jan2 = new Date(temp.substring(0, temp.lastIndexOf(" ") - 1));
-             var std_time_offset = (jan1 - jan2) / (1000 * 60 * 60);
-
-             var june1 = new Date(rightNow.getFullYear(), 6, 1, 0, 0, 0, 0);
-             temp = june1.toGMTString();
-             var june2 = new Date(temp.substring(0, temp.lastIndexOf(" ") - 1));
-             var daylight_time_offset = (june1 - june2) / (1000 * 60 * 60);
-             var dst;
-             if (std_time_offset == daylight_time_offset) {
-             dst = "0"; // daylight savings time is NOT observed
-             } else {
-             dst = "1"; // daylight savings time is observed
-             }
-
-             return {
-             'time_offset': std_time_offset,
-             'dst': dst
-             }
-             */
-
-            var now = new Date();
-            return {
-                'hour': now.getTimezoneOffset(),
-                'seconds': now.getTimezoneOffset() * 60
-            };
-        },
-        'cookie': {
-            'set': function (cname, cvalue, days) {
-                var d = new Date();
-                d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
-                var expires = "expires=" + d.toUTCString();
-                document.cookie = cname + "=" + cvalue + "; " + expires;
-            },
-            'get': function (cname) {
-                var name = cname + "=";
-                var ca = document.cookie.split(';');
-                for (var i = 0; i < ca.length; i++) {
-                    var c = ca[i];
-                    while (c.charAt(0) == ' ') c = c.substring(1);
-                    if (c.indexOf(name) == 0) return c.substring(name.length, c.length);
-                }
-                return "";
-            },
-            'delete': function (cname) {
-                manager.cookie.set(cname, null, 0);
-            }
-        },
-        'getUrl': function (path, url) {
-            return manager.getLocation(path, false, true, url);
-        },
-        'getUrlDetails': function (href) {
-            var parser = document.createElement("a");
-            parser.href = href;
-            var params = {};
-            if (parser.search) {
-                params = (function (a) {
-                    var b = {};
-                    for (var i = 0; i < a.length; ++i) {
-                        var p = a[i].split('=', 2);
-                        if (p.length === 1) {
-                            b[p[0]] = "";
-                        }
-                        else {
-                            b[p[0]] = decodeURIComponent(p[1].replace(/\+/g, " "));
-                        }
-                    }
-                    return b;
-                })(parser.search.substr(1).split('&'));
-            }
-
-            return {
-                'protocol': parser.protocol, // => "http:"
-                'host': parser.host,     // => "example.com:3000"
-                'hostname': parser.hostname, // => "example.com"
-                'port': parser.port,     // => "3000"
-                'pathname': parser.pathname, // => "/pathname/"
-                'hash': parser.hash,     // => "#hash"
-                'search': parser.search,   // => "?search=test"
-                'params': params   // => "{search=test}"
-            };
-        },
-        'redirectUrl': function (url) {
-            window.location.href = url;
-        },
-        'getRandomNumber': function (max, min, returnInt) {
-            if (!manager.isSet(returnInt)) {
-                returnInt = true
-            }
-            if (!manager.isSet(max)) {
-                max = 1
-            }
-            if (!manager.isSet(min)) {
-                if (max == 1) {
-                    min = 0
-                } else {
-                    min = 1
-                }
-            }
-
-            var result = min + Math.random() * (max - min);
-            return returnInt ? parseInt(result, 10) : result;
-        },
-        'getCsrfCode': function () {
-            if (!manager.csrf) {
-                manager.csrf = jQuery('meta[name=csrf-token]').prop('content');
-            }
-
-            return manager.csrf;
-            //return yii.getCsrfToken();
-        },
-        'scrollTo': function (target, offset, animation_time) {
-            offset = offset || 0;
-            animation_time = animation_time || 1000;
-            jQuery('html, body').animate({
-                'scrollTop': (target.offset().top - offset)
-            }, animation_time);
-        },
-        'openPopup': function (window_url, window_width, window_height, window_name) {
-            var width = window_width,
-                height = window_height,
-                left = parseInt((jQuery(window).width() - width) / 2, 10),
-                top = parseInt((jQuery(window).height() - height) / 2, 10),
-                url = window_url,
-                opts = "width=" + width + ", height=" + height + ", top=" + top + ", left=" + left;
-
-            window_name = (manager.isSet(window_name) ? window_name : "_blank");
-            window.open(url, window_name, opts);
-        },
-        'openPage': function (window_url, window_name) {
-            if (!window_name) {
-                window_name = '_blank';
-            }
-            window.open(window_url, window_name);
-        },
-        'putTemplateVariables': function (template, variable) {
-            if (!manager.isObject(variable) || variable.length) {
-                return template;
-            }
-            $.each(variable, function (k, v) {
-                var re = new RegExp('{{@(' + k + ')}}', 'gi');
-                var match;
-                while ((match = template.match(re))) {
-                    template = template.replace(match[0], v);
-                }
-            });
-            return template;
-        },
-        'loader': function (show, selector) {
-            selector = selector ? selector : '.preload';
-            var loader = manager.getBox(selector, true);
-            var body_overflow = manager.getCache('body_overflow');
-            if (!body_overflow) {
-                body_overflow = manager.getBox('body', true).css('overflow');
-                manager.setCache('body_overflow', body_overflow);
-            }
-            if (show) {
-                loader.show();
-                manager.getBox('body', true).css('overflow', 'hidden');
-            } else {
-                loader.hide();
-                manager.getBox('body', true).css('overflow', body_overflow);
             }
         },
         'add': {
