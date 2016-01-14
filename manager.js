@@ -10,24 +10,20 @@
  */
 
 
-var adsbygoogle;
 if (!window.console) {
     window.console = {
         log: function () {
-        },
-        warn: function () {
-        },
-        error: function () {
-        },
-        debug: function () {
-        },
-        info: function () {
+        }, warn: function () {
+        }, error: function () {
+        }, debug: function () {
+        }, info: function () {
         }
     };
 }
 
-var $ = $ || {},
-    jQuery = jQuery || {};
+if (typeof jQuery === 'undefined') {
+    console.log('jQuery not found!');
+}
 
 var manager = (function (window, document, jQuery) {
     "use strict";
@@ -180,16 +176,16 @@ var manager = (function (window, document, jQuery) {
         },
         'getRandomNumber': function (max, min, returnInt) {
             if (!manager.isSet(returnInt)) {
-                returnInt = true
+                returnInt = true;
             }
             if (!manager.isSet(max)) {
-                max = 1
+                max = 1;
             }
             if (!manager.isSet(min)) {
-                if (max == 1) {
-                    min = 0
+                if (max === 1) {
+                    min = 0;
                 } else {
-                    min = 1
+                    min = 1;
                 }
             }
 
@@ -197,20 +193,20 @@ var manager = (function (window, document, jQuery) {
             return returnInt ? parseInt(result, 10) : result;
         },
         'getLocation': function (path, get_params, only_path, other_url) {
-            var url = (other_url ? other_url : (location.protocol + '//' + location.host).replace(/[\/]+$/, '')) + '/' + (path ? path : location.pathname).replace(/^[\/]+/, '');
+            var url = (other_url ? other_url : (window.location.protocol + '//' + window.location.host).replace(/[\/]+$/, '')) + '/' + (path ? path : window.location.pathname).replace(/^[\/]+/, '');
             var c = 0;
             get_params = manager.mergeObjects(manager.getLocationParams(), get_params);
             if (!(!!only_path) && get_params && (c = Object.keys(get_params).length)) {
                 url += ((url.indexOf("?") === -1) ? "?" : "&");
                 var i = 1;
-                $.each(get_params, function (k, v) {
+                jQuery.each(get_params, function (k, v) {
                     if (!!v) {
                         url += k + '=' + v + ((i++) < c ? '&' : '');
                     }
                     //manager.log([k, v, c, get_params, i]);
                 });
                 //url = url.substring(0, url.length - 1);
-                url = url + location.hash;
+                url = url + window.location.hash;
             }
             return url;
         },
@@ -282,8 +278,8 @@ var manager = (function (window, document, jQuery) {
                 var ca = document.cookie.split(';');
                 for (var i = 0; i < ca.length; i++) {
                     var c = ca[i];
-                    while (c.charAt(0) == ' ') c = c.substring(1);
-                    if (c.indexOf(name) == 0) return c.substring(name.length, c.length);
+                    while (c.charAt(0) === ' ') c = c.substring(1);
+                    if (c.indexOf(name) === 0) return c.substring(name.length, c.length);
                 }
                 return "";
             },
@@ -305,8 +301,7 @@ var manager = (function (window, document, jQuery) {
                         var p = a[i].split('=', 2);
                         if (p.length === 1) {
                             b[p[0]] = "";
-                        }
-                        else {
+                        } else {
                             b[p[0]] = decodeURIComponent(p[1].replace(/\+/g, " "));
                         }
                     }
@@ -316,13 +311,13 @@ var manager = (function (window, document, jQuery) {
 
             return {
                 'protocol': parser.protocol, // => "http:"
-                'host': parser.host,     // => "example.com:3000"
+                'host': parser.host, // => "example.com:3000"
                 'hostname': parser.hostname, // => "example.com"
-                'port': parser.port,     // => "3000"
+                'port': parser.port, // => "3000"
                 'pathname': parser.pathname, // => "/pathname/"
-                'hash': parser.hash,     // => "#hash"
-                'search': parser.search,   // => "?search=test"
-                'params': params   // => "{search=test}"
+                'hash': parser.hash, // => "#hash"
+                'search': parser.search, // => "?search=test"
+                'params': params // => "{search=test}"
             };
         },
         'redirectUrl': function (url) {
@@ -353,18 +348,14 @@ var manager = (function (window, document, jQuery) {
             }, animation_time);
         },
         'getCsrfCode': function () {
-            if (!manager.csrf) {
-                manager.csrf = jQuery('meta[name=csrf-token]').prop('content');
-            }
-
-            return manager.csrf;
+            return jQuery('meta[name=csrf-token]').prop('content');
             //return yii.getCsrfToken();
         },
         'putTemplateVariables': function (template, variable) {
             if (!manager.isObject(variable) || variable.length) {
                 return template;
             }
-            $.each(variable, function (k, v) {
+            jQuery.each(variable, function (k, v) {
                 var re = new RegExp('{{@(' + k + ')}}', 'gi');
                 var match;
                 while ((match = template.match(re))) {
@@ -393,7 +384,7 @@ var manager = (function (window, document, jQuery) {
             selector = selector ? selector : 'loading';
             var body = jQuery('body');
             var box_loading = manager.getBox('.' + selector, true);
-            if (box_loading.length == 0) {
+            if (box_loading.length === 0) {
                 box_loading = jQuery('<div>').addClass(selector);
                 body.append(box_loading);
             }
@@ -427,8 +418,8 @@ var manager = (function (window, document, jQuery) {
                     //    gapi.page.go(box_id);
                     //    break;
                     //default:
-                    gapi.plusone.render(box_id);
-                    gapi.plusone.go(box_id);
+                    window.gapi.plusone.render(box_id);
+                    window.gapi.plusone.go(box_id);
                     //        break;
                     //}
                 },
@@ -450,7 +441,7 @@ var manager = (function (window, document, jQuery) {
                                 break;
                         }
 
-                        if (page_id.indexOf('http') == -1) {
+                        if (page_id.indexOf('http') === -1) {
                             page_id = 'https://plus.google.com/' + page_id;
                         }
                         var default_params = {
@@ -458,9 +449,9 @@ var manager = (function (window, document, jQuery) {
                         };
 
                         params = manager.mergeObjects(default_params, (params ? params : []));
-                        var btn = $('<div>').addClass(btn_class);
+                        var btn = jQuery('<div>').addClass(btn_class);
 
-                        $.each(params, function (k, v) {
+                        jQuery.each(params, function (k, v) {
                             btn.attr('data-' + k, v);
                         });
 
@@ -474,7 +465,7 @@ var manager = (function (window, document, jQuery) {
                                     selector.attr('id', box_id);
                                 }
 
-                                manager.google.plus.render(type, box_id)
+                                manager.google.plus.render(type, box_id);
                             }
                         } else {
                             return btn;
@@ -532,12 +523,13 @@ var manager = (function (window, document, jQuery) {
             'analytics': {
                 'init': function (id) {
                     (function (i, s, o, g, r, a, m) {
-                        i['GoogleAnalyticsObject'] = r;
+                        i.GoogleAnalyticsObject = r;
                         i[r] = i[r] || function () {
                                 (i[r].q = i[r].q || []).push(arguments);
-                            }, i[r].l = 1 * new Date(),
-                            a = s.createElement(o),
-                            m = s.getElementsByTagName(o)[0];
+                            };
+                        i[r].l = 1 * new Date();
+                        a = s.createElement(o);
+                        m = s.getElementsByTagName(o)[0];
                         a.async = 1;
                         a.src = g;
                         m.parentNode.insertBefore(a, m);
@@ -548,7 +540,8 @@ var manager = (function (window, document, jQuery) {
                     }
                 },
                 'use': function () {
-                    window['ga'].apply(null, arguments);
+                    //TODO
+                    window.ga.apply(null, arguments);
                 }
             },
             'adsense': {
@@ -556,15 +549,16 @@ var manager = (function (window, document, jQuery) {
                     manager.add.js('//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js');
                 },
                 'reload': function () {
-                    (adsbygoogle = window.adsbygoogle || []).push({});
+                    (window.adsbygoogle = window.adsbygoogle || []).push({});
                 }
-            }//,
+            }
             //'adwords': manager.google.adsense
         },
         'twitter': {
             'init': function () {
                 var obj = !(function (d, s, id) {
-                    var js, fjs = d.getElementsByTagName(s)[0], p = /^http:/.test(d.location) ? 'http' : 'https';
+                    var js, fjs = d.getElementsByTagName(s)[0],
+                        p = /^http:/.test(d.location) ? 'http' : 'https';
                     if (!d.getElementById(id)) {
                         js = d.createElement(s);
                         js.id = id;
@@ -597,7 +591,9 @@ var manager = (function (window, document, jQuery) {
                 window.fbAsyncInit = function () {
                     var init_obj = {
                         xfbml: false,
-                        version: 'v2.4', status: true, cookie: true
+                        version: 'v2.4',
+                        status: true,
+                        cookie: true
                     };
                     app_id = app_id ? app_id : manager.facebook_app_id;
                     if (app_id) {
@@ -630,12 +626,11 @@ var manager = (function (window, document, jQuery) {
                 if (url.search('http') === -1) {
                     url = 'http:' + url;
                 }
-                window.FB.ui(
-                    {
-                        method: 'share',
-                        href: url
-                    }, function (response) {
-                    });
+                window.FB.ui({
+                    method: 'share',
+                    href: url
+                }, function (response) {
+                });
             }
         },
         'add': {
