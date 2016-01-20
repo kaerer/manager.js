@@ -1,5 +1,5 @@
 /**
- * v.2.9.1
+ * v.2.9.2
  *
  * Requirements jQuery, Yii2 js lib
  * Created by erce on 21/07/15.
@@ -167,6 +167,9 @@ var manager = (function (window, document, jQuery) {
         },
         'isSet': function (value) {
             return (typeof value !== "undefined");
+        },
+        'isArray': function (value) {
+            return "[object Array]" === Object.prototype.toString.call(value)
         },
         'isObject': function (value) {
             return (typeof value === "object");
@@ -556,7 +559,8 @@ var manager = (function (window, document, jQuery) {
         },
         'twitter': {
             'init': function () {
-                var obj = !(function (d, s, id) {
+                /*var obj = */
+                !(function (d, s, id) {
                     var js, fjs = d.getElementsByTagName(s)[0],
                         p = /^http:/.test(d.location) ? 'http' : 'https';
                     if (!d.getElementById(id)) {
@@ -566,7 +570,7 @@ var manager = (function (window, document, jQuery) {
                         fjs.parentNode.insertBefore(js, fjs);
                     }
                 })(document, "script", "twitter-wjs");
-                manager.setCache('twitter_init', obj);
+                //manager.setCache('twitter_init', obj);
             },
             'share': function (url, text, hashtags) {
                 if (!manager.isSet(url)) {
@@ -582,7 +586,14 @@ var manager = (function (window, document, jQuery) {
                     text = (text.length + url.length > 140 - 4) ? (text.substr(0, (140 - url.length - 4)) + '...') : text;
                 }
 
-                url = 'https://twitter.com/intent/tweet?url=' + encodeURIComponent(url) + (manager.isSet(text) ? ('&text=' + encodeURIComponent(text)) : '');
+                if (manager.isSet(hashtags) && manager.isArray(hashtags)) {
+                    hashtags = hashtags.join(',');
+                }
+
+                url = 'https://twitter.com/intent/tweet?url=' + encodeURIComponent(url) +
+                    (manager.isSet(text) ? ('&text=' + encodeURIComponent(text)) : '') +
+                    (manager.isSet(hashtags) ? ('&hashtags=' + encodeURIComponent(hashtags)) : '')
+                ;
                 manager.openPopup(url, 500, 300);
             }
         },
