@@ -326,6 +326,9 @@ var manager = (function (window, document, jQuery) {
         'redirectUrl': function (url) {
             window.location.href = url;
         },
+        'reload': function () {
+            manager.redirectUrl(window.location.href);
+        },
         'openPopup': function (window_url, window_width, window_height, window_name) {
             var width = window_width,
                 height = window_height,
