@@ -10,18 +10,18 @@
  */
 
 
-if (!window.console) {
-    window.console = {
-        log: function () {
+self.console = self.console || {
+        info: function () {
+        }, log: function () {
+        }, debug: function () {
         }, warn: function () {
         }, error: function () {
-        }, debug: function () {
-        }, info: function () {
         }
     };
-}
 
-if (typeof jQuery === 'undefined') {
+var cssSelector = jQuery;
+
+if (typeof cssSelector === 'undefined') {
     console.log('jQuery not found!');
 }
 
@@ -136,6 +136,24 @@ var manager = (function (window, document, jQuery) {
             }
 
             throw new Error("Unable to copy obj! Its type isn't supported.");
+        },
+        'sortObject': function sortProperties(obj, isNumericSort) {
+            isNumericSort = isNumericSort || false; // by default text sort
+            var sortable = [];
+            for (var key in obj)
+                if (obj.hasOwnProperty(key))
+                    sortable.push([key, obj[key]]);
+            if (isNumericSort)
+                sortable.sort(function (a, b) {
+                    return a[1] - b[1];
+                });
+            else
+                sortable.sort(function (a, b) {
+                    var x = a[1].toLowerCase(),
+                        y = b[1].toLowerCase();
+                    return x < y ? -1 : x > y ? 1 : 0;
+                });
+            return sortable; // array in format [ [ key1, val1 ], [ key2, val2 ], ... ]
         },
         'getAllConfig': function () {
             return manager.config;
@@ -276,7 +294,7 @@ var manager = (function (window, document, jQuery) {
                 var expires = "expires=" + d.toUTCString();
                 document.cookie = cname + "=" + cvalue + "; " + expires;
             },
-            'get': function (cname) {
+            'get': function (cname, cvalue_default) {
                 var name = cname + "=";
                 var ca = document.cookie.split(';');
                 for (var i = 0; i < ca.length; i++) {
@@ -284,7 +302,7 @@ var manager = (function (window, document, jQuery) {
                     while (c.charAt(0) === ' ') c = c.substring(1);
                     if (c.indexOf(name) === 0) return c.substring(name.length, c.length);
                 }
-                return "";
+                return cvalue_default ? cvalue_default : "";
             },
             'delete': function (cname) {
                 manager.cookie.set(cname, null, 0);
@@ -659,4 +677,4 @@ var manager = (function (window, document, jQuery) {
         }
     };
 
-})(window, document, jQuery);
+})(window, document, cssSelector);
