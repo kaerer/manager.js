@@ -246,6 +246,40 @@ var manager = (function (window, document, jQuery) {
             }
             return b;
         },
+        'getUrl': function (path, url) {
+            return manager.getLocation(path, false, true, url);
+        },
+        'getUrlDetails': function (href) {
+            //TODO: hash ve params boş iken hata var gibi kontrol edilmeli
+            var parser = document.createElement("a");
+            parser.href = href;
+            var params = {};
+            if (parser.search) {
+                params = (function (a) {
+                    var b = {};
+                    for (var i = 0; i < a.length; ++i) {
+                        var p = a[i].split('=', 2);
+                        if (p.length === 1) {
+                            b[p[0]] = "";
+                        } else {
+                            b[p[0]] = decodeURIComponent(p[1].replace(/\+/g, " "));
+                        }
+                    }
+                    return b;
+                })(parser.search.substr(1).split('&'));
+            }
+
+            return {
+                'protocol': parser.protocol, // => "http:"
+                'host': parser.host, // => "example.com:3000"
+                'hostname': parser.hostname, // => "example.com"
+                'port': parser.port, // => "3000"
+                'pathname': parser.pathname, // => "/pathname/"
+                'hash': parser.hash, // => "#hash"
+                'search': parser.search, // => "?search=test"
+                'params': params // => "{search=test}"
+            };
+        },
         'getTimezone': function () {
             /**
              * http://www.onlineaspect.com/2007/06/08/auto-detect-a-time-zone-with-javascript/
@@ -307,39 +341,6 @@ var manager = (function (window, document, jQuery) {
             'delete': function (cname) {
                 manager.cookie.set(cname, null, 0);
             }
-        },
-        'getUrl': function (path, url) {
-            return manager.getLocation(path, false, true, url);
-        },
-        'getUrlDetails': function (href) {
-            var parser = document.createElement("a");
-            parser.href = href;
-            var params = {};
-            if (parser.search) {
-                params = (function (a) {
-                    var b = {};
-                    for (var i = 0; i < a.length; ++i) {
-                        var p = a[i].split('=', 2);
-                        if (p.length === 1) {
-                            b[p[0]] = "";
-                        } else {
-                            b[p[0]] = decodeURIComponent(p[1].replace(/\+/g, " "));
-                        }
-                    }
-                    return b;
-                })(parser.search.substr(1).split('&'));
-            }
-
-            return {
-                'protocol': parser.protocol, // => "http:"
-                'host': parser.host, // => "example.com:3000"
-                'hostname': parser.hostname, // => "example.com"
-                'port': parser.port, // => "3000"
-                'pathname': parser.pathname, // => "/pathname/"
-                'hash': parser.hash, // => "#hash"
-                'search': parser.search, // => "?search=test"
-                'params': params // => "{search=test}"
-            };
         },
         'redirectUrl': function (url) {
             window.location.href = url;
